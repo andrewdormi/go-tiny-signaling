@@ -62,3 +62,8 @@ func (server *Server) handleDisconnect(socket *Socket) {
 		}
 	}
 }
+
+func (server *Server) Send(roomID string, event string, data Payload) {
+	room := GetOrCreateRoom(roomID)
+	room.Send(event, data)
+}

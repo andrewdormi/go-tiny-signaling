@@ -38,3 +38,9 @@ func (room *Room) IsEmpty() bool {
 	defer room.Unlock()
 	return len(room.sockets) == 0
 }
+
+func (room *Room) Send(event string, data Payload) {
+	for _, socket := range room.sockets {
+		socket.Send(event, data, nil)
+	}
+}
