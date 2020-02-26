@@ -28,18 +28,18 @@ func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	if err != nil {
 		panic(err)
 	}
-	wsTransport := NewTransport(socket)
+	wsTransport := newTransport(socket)
 	server.handler(wsTransport, request)
-	wsTransport.ReadMessage()
+	wsTransport.readMessage()
 }
 
-func (server *Server) handler(transport *Transport, request *http.Request) {
-	socket := NewConnection(transport, server.handleRequest, server.handleDisconnect)
+func (server *Server) handler(t *transport, request *http.Request) {
+	socket := newConnection(t, server.handleRequest, server.handleDisconnect)
 	server.Emit("connect", socket)
 }
 
 func (server *Server) handleRequest(socket *Socket, request Payload, callback CallbackFunc) {
-	defer Recover("signal.in handleRequest")
+	defer recoverUtil()
 	event := request["event"]
 	if event == "" {
 		return
@@ -55,15 +55,15 @@ func (server *Server) handleRequest(socket *Socket, request Payload, callback Ca
 func (server *Server) handleDisconnect(socket *Socket) {
 	socket.Emit("disconnect")
 	for _, roomID := range socket.roomIDs {
-		room := GetOrCreateRoom(roomID)
+		r := getOrCreateRoom(roomID)
 		socket.Leave(roomID)
-		if room.IsEmpty() {
-			RemoveRoom(room)
+		if r.isEmpty() {
+			removeRoom(r)
 		}
 	}
 }
 
 func (server *Server) Send(roomID string, event string, data Payload) {
-	room := GetOrCreateRoom(roomID)
-	room.Send(event, data)
+	r := getOrCreateRoom(roomID)
+	r.send(event, data)
 }

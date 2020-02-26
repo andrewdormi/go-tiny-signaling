@@ -4,43 +4,43 @@ import (
 	"sync"
 )
 
-type Room struct {
+type room struct {
 	*sync.Mutex
-	ID      string
+	id      string
 	sockets map[string]*Socket
 	closed  bool
 }
 
-func NewRoom(roomId string) *Room {
-	room := &Room{
+func newRoom(roomId string) *room {
+	r := &room{
 		sockets: make(map[string]*Socket),
 		closed:  false,
-		ID:      roomId,
+		id:      roomId,
 	}
-	room.Mutex = new(sync.Mutex)
-	return room
+	r.Mutex = new(sync.Mutex)
+	return r
 }
 
-func (room *Room) AddSocket(socket *Socket) {
-	room.Lock()
-	defer room.Unlock()
-	room.sockets[socket.ID] = socket
+func (r *room) addSocket(socket *Socket) {
+	r.Lock()
+	defer r.Unlock()
+	r.sockets[socket.ID] = socket
 }
 
-func (room *Room) RemoveSocket(socket *Socket) {
-	room.Lock()
-	defer room.Unlock()
-	delete(room.sockets, socket.ID)
+func (r *room) removeSocket(socket *Socket) {
+	r.Lock()
+	defer r.Unlock()
+	delete(r.sockets, socket.ID)
 }
 
-func (room *Room) IsEmpty() bool {
-	room.Lock()
-	defer room.Unlock()
-	return len(room.sockets) == 0
+func (r *room) isEmpty() bool {
+	r.Lock()
+	defer r.Unlock()
+	return len(r.sockets) == 0
 }
 
-func (room *Room) Send(event string, data Payload) {
-	for _, socket := range room.sockets {
+func (r *room) send(event string, data Payload) {
+	for _, socket := range r.sockets {
 		socket.Send(event, data, nil)
 	}
 }

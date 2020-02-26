@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 )
 
-func Recover(flag string) {
+func recoverUtil() {
 	_, _, _, _ = runtime.Caller(1)
 	if err := recover(); err != nil {
 		debug.PrintStack()

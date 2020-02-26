@@ -2,24 +2,24 @@ package signaling
 
 import "sync"
 
-var rooms = map[string]*Room{}
+var rooms = map[string]*room{}
 var roomsMutex = new(sync.Mutex)
 
-func GetOrCreateRoom(id string) *Room {
+func getOrCreateRoom(id string) *room {
 	roomsMutex.Lock()
 	defer roomsMutex.Unlock()
 
 	if room, ok := rooms[id]; ok {
 		return room
 	}
-	room := NewRoom(id)
+	room := newRoom(id)
 	rooms[id] = room
 	return room
 }
 
-func RemoveRoom(room *Room) {
+func removeRoom(r *room) {
 	roomsMutex.Lock()
 	defer roomsMutex.Unlock()
 
-	delete(rooms, room.ID)
+	delete(rooms, r.id)
 }

@@ -11,39 +11,39 @@ import (
 
 const pingPeriod = 5 * time.Second
 
-type Transport struct {
+type transport struct {
 	emission.Emitter
 	socket *websocket.Conn
 	mutex  *sync.Mutex
 	closed bool
 }
 
-func NewTransport(socket *websocket.Conn) *Transport {
-	var transport Transport
-	transport.Emitter = *emission.NewEmitter()
-	transport.socket = socket
-	transport.mutex = new(sync.Mutex)
-	transport.closed = false
-	transport.socket.SetCloseHandler(func(code int, text string) error {
-		transport.Emit("disconnect")
-		transport.closed = true
+func newTransport(socket *websocket.Conn) *transport {
+	var t transport
+	t.Emitter = *emission.NewEmitter()
+	t.socket = socket
+	t.mutex = new(sync.Mutex)
+	t.closed = false
+	t.socket.SetCloseHandler(func(code int, text string) error {
+		t.Emit("disconnect")
+		t.closed = true
 		return nil
 	})
-	return &transport
+	return &t
 }
 
-func (transport *Transport) ReadMessage() {
+func (t *transport) readMessage() {
 	in := make(chan []byte)
 	stop := make(chan struct{})
 	pingTicker := time.NewTicker(pingPeriod)
 
-	var c = transport.socket
+	var c = t.socket
 	go func() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				if _, k := err.(*websocket.CloseError); k {
-					transport.Close()
+					t.close()
 				}
 				close(stop)
 				break
@@ -55,33 +55,33 @@ func (transport *Transport) ReadMessage() {
 	for {
 		select {
 		case _ = <-pingTicker.C:
-			if err := transport.Send("{}"); err != nil {
+			if err := t.send("{}"); err != nil {
 				pingTicker.Stop()
 				return
 			}
 		case message := <-in:
-			transport.Emit("message", message)
+			t.Emit("message", message)
 		case <-stop:
 			return
 		}
 	}
 }
 
-func (transport *Transport) Send(message string) error {
-	transport.mutex.Lock()
-	defer transport.mutex.Unlock()
-	if transport.closed {
+func (t *transport) send(message string) error {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	if t.closed {
 		return errors.New("websocket: write closed")
 	}
-	return transport.socket.WriteMessage(websocket.TextMessage, []byte(message))
+	return t.socket.WriteMessage(websocket.TextMessage, []byte(message))
 }
 
-func (transport *Transport) Close() {
-	transport.mutex.Lock()
-	defer transport.mutex.Unlock()
-	if transport.closed == false {
-		transport.socket.Close()
-		transport.closed = true
-		transport.Emit("disconnect")
+func (t *transport) close() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	if t.closed == false {
+		t.socket.Close()
+		t.closed = true
+		t.Emit("disconnect")
 	}
 }

@@ -20,20 +20,20 @@ type Transcation struct {
 type Socket struct {
 	emission.Emitter
 	ID           string
-	transport    *Transport
+	transport    *transport
 	transcations map[string]*Transcation
 	onRequest    RequestFunc
 	onDisconnect DisconnectFunc
 	roomIDs      []string
 }
 
-func NewConnection(transport *Transport, onRequest RequestFunc, onDisconnect DisconnectFunc) *Socket {
+func newConnection(t *transport, onRequest RequestFunc, onDisconnect DisconnectFunc) *Socket {
 	var socket Socket
 	socket.ID = uuid.NewV4().String()
 	socket.Emitter = *emission.NewEmitter()
 	socket.onRequest = onRequest
 	socket.onDisconnect = onDisconnect
-	socket.transport = transport
+	socket.transport = t
 	socket.roomIDs = []string{}
 	socket.transcations = map[string]*Transcation{}
 	socket.transport.On("message", socket.handleMessage)
@@ -46,7 +46,7 @@ func NewConnection(transport *Transport, onRequest RequestFunc, onDisconnect Dis
 }
 
 func (socket *Socket) Close() {
-	socket.transport.Close()
+	socket.transport.close()
 }
 
 func (socket *Socket) Send(event string, data Payload, callback CallbackFunc) {
@@ -55,15 +55,15 @@ func (socket *Socket) Send(event string, data Payload, callback CallbackFunc) {
 	if callback != nil {
 		socket.transcations[id] = &Transcation{id: id, callback: callback}
 	}
-	socket.sendMessage(event, request)
+	socket.sendMessage(request)
 }
 
-func (socket *Socket) sendMessage(event string, message *Message) {
+func (socket *Socket) sendMessage(message *Message) {
 	str, err := json.Marshal(message)
 	if err != nil {
 		return
 	}
-	socket.transport.Send(string(str))
+	socket.transport.send(string(str))
 }
 
 func (socket *Socket) handleMessage(message []byte) {
@@ -90,7 +90,7 @@ func (socket *Socket) handleRequest(request Payload) {
 				Event: event,
 				Data:  data,
 			}
-			socket.sendMessage(event, response)
+			socket.sendMessage(response)
 		}
 		socket.onRequest(socket, request, callback)
 	}
@@ -108,14 +108,14 @@ func (socket *Socket) handleResponse(response Payload) {
 }
 
 func (socket *Socket) Join(roomID string) {
-	room := GetOrCreateRoom(roomID)
-	room.AddSocket(socket)
+	r := getOrCreateRoom(roomID)
+	r.addSocket(socket)
 	socket.roomIDs = append(socket.roomIDs, roomID)
 }
 
 func (socket *Socket) Leave(roomID string) {
-	room := GetOrCreateRoom(roomID)
-	room.RemoveSocket(socket)
+	r := getOrCreateRoom(roomID)
+	r.removeSocket(socket)
 	socket.roomIDs = funk.FilterString(socket.roomIDs, func(s string) bool {
 		return s != roomID
 	})
