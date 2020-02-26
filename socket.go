@@ -37,7 +37,7 @@ func NewConnection(transport *Transport, onRequest RequestFunc, onDisconnect Dis
 	socket.roomIDs = []string{}
 	socket.transcations = map[string]*Transcation{}
 	socket.transport.On("message", socket.handleMessage)
-	socket.transport.On("disconnect", func(code int, err string) {
+	socket.transport.On("disconnect", func() {
 		onDisconnect(&socket)
 	})
 	socket.transport.On("error", func(code int, err string) {

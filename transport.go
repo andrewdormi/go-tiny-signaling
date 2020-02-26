@@ -25,7 +25,7 @@ func NewTransport(socket *websocket.Conn) *Transport {
 	transport.mutex = new(sync.Mutex)
 	transport.closed = false
 	transport.socket.SetCloseHandler(func(code int, text string) error {
-		transport.Emit("disconnect", code, text)
+		transport.Emit("disconnect")
 		transport.closed = true
 		return nil
 	})
@@ -42,8 +42,8 @@ func (transport *Transport) ReadMessage() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				if c, k := err.(*websocket.CloseError); k {
-					transport.Emit("error", c.Code, c.Text)
+				if _, k := err.(*websocket.CloseError); k {
+					transport.Close()
 				}
 				close(stop)
 				break
@@ -82,5 +82,6 @@ func (transport *Transport) Close() {
 	if transport.closed == false {
 		transport.socket.Close()
 		transport.closed = true
+		transport.Emit("disconnect")
 	}
 }
