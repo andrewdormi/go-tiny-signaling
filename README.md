@@ -1,4 +1,6 @@
-# go-tiny-signaling
+# Tiny signaling
+[![GoDoc](https://godoc.org/github.com/andrewdormi/go-tiny-signaling?status.svg)](https://godoc.org/github.com/andrewdormi/go-tiny-signaling)
+
 Simple wrapper for websocket signaling
 
 ## How to use
