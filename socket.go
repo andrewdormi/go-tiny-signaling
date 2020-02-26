@@ -12,7 +12,7 @@ type CallbackFunc func(data Payload)
 type RequestFunc func(*Socket, Payload, CallbackFunc)
 type DisconnectFunc func(*Socket)
 
-type Transcation struct {
+type transcation struct {
 	id       string
 	callback CallbackFunc
 }
@@ -21,7 +21,7 @@ type Socket struct {
 	emission.Emitter
 	ID           string
 	transport    *transport
-	transcations map[string]*Transcation
+	transcations map[string]*transcation
 	onRequest    RequestFunc
 	onDisconnect DisconnectFunc
 	roomIDs      []string
@@ -35,7 +35,7 @@ func newConnection(t *transport, onRequest RequestFunc, onDisconnect DisconnectF
 	socket.onDisconnect = onDisconnect
 	socket.transport = t
 	socket.roomIDs = []string{}
-	socket.transcations = map[string]*Transcation{}
+	socket.transcations = map[string]*transcation{}
 	socket.transport.On("message", socket.handleMessage)
 	socket.transport.On("disconnect", func() {
 		onDisconnect(&socket)
@@ -53,7 +53,7 @@ func (socket *Socket) Send(event string, data Payload, callback CallbackFunc) {
 	id := uuid.NewV4().String()
 	request := &Message{Type: "request", ID: id, Event: event, Data: data}
 	if callback != nil {
-		socket.transcations[id] = &Transcation{id: id, callback: callback}
+		socket.transcations[id] = &transcation{id: id, callback: callback}
 	}
 	socket.sendMessage(request)
 }
