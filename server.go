@@ -39,7 +39,6 @@ func (server *Server) handler(t *transport, request *http.Request) {
 }
 
 func (server *Server) handleRequest(socket *Socket, request Payload, callback CallbackFunc) {
-	defer recoverUtil()
 	event := request["event"]
 	if event == "" {
 		return
