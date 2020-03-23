@@ -44,6 +44,7 @@ func (t *transport) readMessage() {
 			if err != nil {
 				if _, k := err.(*websocket.CloseError); k {
 					t.close()
+					return
 				}
 				close(stop)
 				break
@@ -56,7 +57,7 @@ func (t *transport) readMessage() {
 		select {
 		case _ = <-pingTicker.C:
 			if err := t.send("{}"); err != nil {
-				pingTicker.Stop()
+				t.close()
 				return
 			}
 		case message := <-in:
