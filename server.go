@@ -1,6 +1,7 @@
 package signaling
 
 import (
+	"fmt"
 	"github.com/chuckpreslar/emission"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -26,7 +27,8 @@ func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	responseHeader := http.Header{}
 	socket, err := server.upgrader.Upgrade(writer, request, responseHeader)
 	if err != nil {
-		panic(err)
+		fmt.Print(err)
+		return
 	}
 	wsTransport := newTransport(socket)
 	server.handler(wsTransport, request)
